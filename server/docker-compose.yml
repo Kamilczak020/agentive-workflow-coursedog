@@ -1,0 +1,17 @@
+version: '3'
+services:
+  neo4j:
+    container_name: ai-insights-neo4j
+    restart: unless-stopped
+    image: neo4j:5.21-community-bullseye
+    volumes:
+      - neo4j-data:/data
+    ports:
+      - 7474:7474
+      - 7687:7687
+    environment:
+      NEO4J_AUTH: neo4j/development
+      NEO4JLABS_PLUGINS: '["apoc"]'
+
+volumes:
+  neo4j-data:
