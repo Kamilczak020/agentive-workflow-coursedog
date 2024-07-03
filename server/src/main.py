@@ -1,7 +1,3 @@
-from dotenv import load_dotenv
-from import_data import import_all_nodes
+from import_from_db import import_all_from_db
 
-load_dotenv()
-
-import_all_nodes()
-
+# import_all_from_db()
