@@ -3,3 +3,5 @@
 venv
 
 documents/*.csv
+
+src/__pycache__
