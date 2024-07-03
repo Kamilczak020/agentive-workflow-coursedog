@@ -1,3 +1,5 @@
-from import_from_db import import_all_from_db
+from pipeline import run_pipeline
 
-# import_all_from_db()
+query = 'How many professors teach courses?'
+
+run_pipeline(query)
