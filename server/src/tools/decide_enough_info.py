@@ -17,7 +17,7 @@ enough_info_tool = {
     'type': 'function',
     'function': {
         'name': 'is_enough_info',
-        'description': 'Executes different flows, based on whether there is enough info or not.',
+        'description': 'If the answer is no, the application will perform additional queries. If the answer is yes, the application will generate a final response.',
         'parameters': enough_info_tool_schema
     }
 }

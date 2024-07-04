@@ -1,7 +1,14 @@
 from pipelines.master import run_master_pipeline
 from import_from_db import import_all_from_db
+import streamlit as st
 
-query = 'What is a good course for someone interested in biology and biomedical engineering?'
-# query = 'Which professors teach PHED1125?'
+st.title('Coursedog magic!')
 
-run_master_pipeline(query)
+def generate_response(message):
+    st.info(run_master_pipeline(message, 5))
+
+with st.form('my_form'):
+    text = st.text_area('Enter text:')
+    submitted = st.form_submit_button('Submit')
+    if submitted:
+        generate_response(text)

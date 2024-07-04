@@ -21,16 +21,19 @@ step_prompt_content = '''
     to answer the user query. Also take into account already gathered information, not to duplicate work.
     Ensure that any new tool calls aren't identical or very similar to any of the past tool calls.
 
-    Remember, some information can be multiple jumps away. Use the provided schema to navigate it, potentially in multiple steps.
-    Information present is strictly related to the user query.
+    Remember, some information can be multiple jumps away. Use the provided schema to navigate it.
+    This is only a part of the discovery process. Multiple discovery steps will be performed, each having context of the previous ones.
+
+    When choosing a discovery tool, take into account previously used tools from gathered information.
+    Do not repeat the same queries that have been recorded in info.
+
+    This discovery process will run multiple times, and each time you need to extract new information.
+
 
     User Query: {{ query }}
 
-    Already gathered information:
+    Already gathered information by the LLM below. Information present is strictly related to the user query.
     {{ info }}
-
-    Past tool calls:
-    {{ past_tool_calls }}
 '''
 
 step_prompt_template = [
@@ -78,12 +81,11 @@ chat_pipeline.connect('step_prompt_builder', 'step_generation_llm')
 chat_pipeline.connect('step_generation_llm', 'discovery_prompt_builder.query')
 chat_pipeline.connect('discovery_prompt_builder', 'discovery_generation_llm')
 
-def run_discovery_pipeline(query: str, info: str, past_tool_calls):
+def run_discovery_pipeline(query: str, info: str):
     return chat_pipeline.run({
         'step_prompt_builder': {
             'query': query,
             'info': info,
-            'past_tool_calls': past_tool_calls,
             'schema': get_data_model_prompt(),
         },
         'discovery_prompt_builder': {

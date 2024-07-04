@@ -16,6 +16,7 @@ user_prompt_template = '''
     You can find the info between <GATHERED_INFORMATION_START> and <GATHERED_INFORMATION_END>.
     If there is no information gathered yet, respond no.
     If the information is enough to answer the user query, respond yes.
+    Remember, that additional information can be obtained in further steps, as this is simply an early exit condition.
 
     User Query: {{ query }}
 

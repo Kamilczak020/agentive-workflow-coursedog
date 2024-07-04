@@ -44,7 +44,7 @@ def run_semantic_search(arguments):
         question = embedder_response['embedding']
 
         response = session.run('''
-            CALL db.index.vector.queryNodes($index_name, 5, $question)
+            CALL db.index.vector.queryNodes($index_name, 10, $question)
             YIELD node
             RETURN node
         ''', question=question, index_name=arguments['over_index'])
