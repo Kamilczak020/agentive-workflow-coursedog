@@ -18,9 +18,12 @@ step_prompt_content = '''
     <SCHEMA_END>
 
     Given the following user query, think out loud and consider the next step of knowledge acquisition, required
-    to answer the user query.
+    to answer the user query. Also take into account already gathered information, not to duplicate work.
 
     User Query: {{ query }}
+
+    Already gathered information:
+    {{ info }}
 '''
 
 step_prompt_template = [
@@ -41,6 +44,7 @@ discovery_prompt_content = '''
 
     Original user query {{ query }}
     Given the following breakdown of the problem, use one of the provided tools to gain more insights.
+    Do not duplicate similar queries within tool calls.
 '''
 
 discovery_prompt_template = [
@@ -54,8 +58,8 @@ discovery_generation_llm = OpenAIChatGenerator(
 )
 
 discovery_tools = [
+    # cypher_query_tool,
     search_semantically_tool,
-    cypher_query_tool,
 ]
 
 chat_pipeline = Pipeline()
@@ -67,10 +71,11 @@ chat_pipeline.connect('step_prompt_builder', 'step_generation_llm')
 chat_pipeline.connect('step_generation_llm', 'discovery_prompt_builder.query')
 chat_pipeline.connect('discovery_prompt_builder', 'discovery_generation_llm')
 
-def run_generate_steps_pipeline(query: str):
-    response = chat_pipeline.run({
+def run_discovery_pipeline(query: str, info: str):
+    return chat_pipeline.run({
         'step_prompt_builder': {
             'query': query,
+            'info': info,
             'schema': get_data_model_prompt(),
         },
         'discovery_prompt_builder': {
@@ -82,5 +87,3 @@ def run_generate_steps_pipeline(query: str):
             }
         }
     })
-
-    print(response)

@@ -33,5 +33,8 @@ def get_data_model_prompt():
         - (s:Section)-[:FOR]->(c:Course) (one-to-one)
         - (s:Section)-[:BELONGS_TO]->(d:Department) (one-to-one)
         - (p:Professor)-[:TEACHES]->(s:Section) (one-to-many)
+
+        There is also semantic search indexes available:
+        - course_description - semantic search over embbeded course descriptions
     '''
 

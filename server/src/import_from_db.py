@@ -1,7 +1,13 @@
+from haystack.utils import Secret
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
 from neo4j import GraphDatabase
 from config import config
+from haystack.components.embedders import OpenAITextEmbedder
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 try:
     client = MongoClient(config['mongo']['uri'])
@@ -13,8 +19,10 @@ def import_all_from_db():
     db = client['abraham_baldwin']
     driver = GraphDatabase.driver(config['neo4j']['uri'], auth=config['neo4j']['auth'])
 
-    # import_all_nodes(db, driver)
+    import_all_nodes(db, driver)
     import_all_relationships(db, driver)
+    import_all_embeddings(db, driver)
+    create_all_indexes(driver)
 
     driver.close()
 
@@ -31,6 +39,14 @@ def import_all_relationships(db, driver):
         section_to_course(db, session)
         section_to_department(db, session)
         section_to_professor(db, session)
+
+def import_all_embeddings(db, driver):
+    with driver.session() as session:
+        embed_course_descriptions(db, session)
+
+def create_all_indexes(driver):
+    with driver.session() as session:
+        create_course_indexes(session)
 
 def import_courses_from_db(db, session):
     collection = db['courses.2024.8']
@@ -152,3 +168,29 @@ def section_to_professor(db, session):
             MATCH (p:Professor {{ professor_id: prof_id }})
             MERGE (p)-[:TEACHES]->(s)
         ''', section_id=entity['_id'])
+
+def embed_course_descriptions(db, session):
+    collection = db['courses.2024.8']
+
+    from_db = collection.find({ 'status': 'Active' })
+    for entity in from_db:
+        embedder = OpenAITextEmbedder(api_key=Secret.from_env_var('OPENAI_API_KEY'), model='text-embedding-3-small')
+        embedder_response = embedder.run(entity['description'])
+        description_embed = embedder_response['embedding']
+
+        session.run(f'''
+            MATCH (c:Course {{ course_id: $course_id }})
+            WHERE c.course_id IS NOT NULL
+            SET c.description_embed = $description_embed
+        ''', course_id=entity['_id'], description_embed=description_embed)
+
+def create_course_indexes(session):
+    session.run('''
+        CREATE VECTOR INDEX course_description IF NOT EXISTS
+        FOR (c:Course)
+        ON c.description_embed
+        OPTIONS {indexConfig: {
+            `vector.dimensions`: 1536,
+            `vector.similarity_function`: 'cosine'
+        }}
+    ''')
