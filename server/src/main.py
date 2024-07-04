@@ -1,5 +1,5 @@
-from pipeline import run_pipeline
+from pipelines.master import run_master_pipeline
 
-query = 'How many professors teach courses?'
+query = 'What is a good course for someone interested in biology and biomedical engineering?'
 
-run_pipeline(query)
+run_master_pipeline(query)

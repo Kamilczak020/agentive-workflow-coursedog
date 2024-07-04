@@ -1,43 +1,84 @@
+import json
+from typing import List
 from haystack import Pipeline
+from haystack.dataclasses import ChatMessage
 from haystack.utils import Secret
-from config import config
-from neo4j import GraphDatabase
-from haystack.components.generators import OpenAIGenerator
-from haystack.components.embedders import OpenAITextEmbedder
-from haystack.components.builders.prompt_builder import PromptBuilder
-
+from haystack.components.generators.chat import OpenAIChatGenerator
+from haystack.components.builders import ChatPromptBuilder
+from tools.cypher_query import cypher_query_tool
+from tools.search_semantically import search_semantically_tool
 from model import get_data_model_prompt
 
-driver = GraphDatabase.driver(config['neo4j']['uri'], auth=config['neo4j']['auth'])
+from dotenv import load_dotenv
 
-prompt_template = '''
-    Take into account how the application knowledge is stored.
-    Schema: {{ schema }}
+load_dotenv()
 
-    Given the following user query, think out loud and break it down into resolution steps,
-    That would help gain insights into the problem.
+step_prompt_content = '''
+    Take into account how the application knowledge is stored, found between <SCHEMA_START> and <SCHEMA_END>.
+    <SCHEMA_START>
+    {{ schema }}
+    <SCHEMA_END>
+
+    Given the following user query, think out loud and consider the next step of knowledge acquisition, required
+    to answer the user query.
+
     User Query: {{ query }}
-
 '''
 
-text_embedder = OpenAITextEmbedder(api_key=Secret.from_env_var('OPENAI_API_KEY'))
-prompt_builder = PromptBuilder(template=prompt_template)
-llm = OpenAIGenerator(
+step_prompt_template = [
+    ChatMessage.from_user(step_prompt_content)
+]
+
+step_prompt_builder = ChatPromptBuilder(template=step_prompt_template)
+step_generation_llm = OpenAIChatGenerator(
+    api_key=Secret.from_env_var('OPENAI_API_KEY'),
+    model='gpt-3.5-turbo'
+)
+
+discovery_prompt_content = '''
+    Take into account how the application knowledge is stored, found between <SCHEMA_START> and <SCHEMA_END>.
+    <SCHEMA_START>
+    {{ schema }}
+    <SCHEMA_END>
+
+    Original user query {{ query }}
+    Given the following breakdown of the problem, execute
+'''
+
+discovery_prompt_template = [
+    ChatMessage.from_user(discovery_prompt_content)
+]
+
+discovery_prompt_builder = ChatPromptBuilder(template=discovery_prompt_template)
+discovery_generation_llm = OpenAIChatGenerator(
     api_key=Secret.from_env_var('OPENAI_API_KEY'),
     model='gpt-4o'
 )
 
-chat_pipeline = Pipeline()
-chat_pipeline.add_component('prompt_builder', prompt_builder)
-chat_pipeline.add_component('llm', llm)
-chat_pipeline.connect('prompt_builder', 'llm')
+discovery_tools = [
+    search_semantically_tool,
+    cypher_query_tool,
+]
 
-def run_generate_steps_pipeline(query):
-    result = chat_pipeline.run({
+chat_pipeline = Pipeline()
+chat_pipeline.add_component('step_prompt_builder', step_prompt_builder)
+chat_pipeline.add_component('step_generation_llm', step_generation_llm)
+chat_pipeline.add_component('discovery_prompt_builder', discovery_prompt_builder)
+chat_pipeline.add_component('discovery_generation_llm', discovery_generation_llm)
+chat_pipeline.connect('step_prompt_builder', 'step_generation_llm')
+chat_pipeline.connect('discovery_prompt_builder', 'discovery_generation_llm')
+
+def run_generate_steps_pipeline(query: str):
+    response = chat_pipeline.run({
         'prompt_builder': {
             'query': query,
             'schema': get_data_model_prompt(),
+        },
+        'discovery_generation_llm': {
+            'generation_kwargs': {
+                'tools': discovery_tools,
+            }
         }
     })
 
-    print(result)
+    print(response)

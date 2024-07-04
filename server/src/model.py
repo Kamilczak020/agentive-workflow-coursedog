@@ -34,3 +34,4 @@ def get_data_model_prompt():
         - (s:Section)-[:BELONGS_TO]->(d:Department) (one-to-one)
         - (p:Professor)-[:TEACHES]->(s:Section) (one-to-many)
     '''
+
