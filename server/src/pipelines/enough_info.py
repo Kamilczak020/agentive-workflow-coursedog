@@ -14,6 +14,8 @@ user_prompt_template = '''
 
     Given the following information that was gathered in previous steps, decide wether this is enough information to truthfully answer the user query.
     You can find the info between <GATHERED_INFORMATION_START> and <GATHERED_INFORMATION_END>.
+    If there is no information gathered yet, respond no.
+    If the information is enough to answer the user query, respond yes.
 
     User Query: {{ query }}
 

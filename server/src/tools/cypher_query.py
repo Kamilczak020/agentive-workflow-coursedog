@@ -1,4 +1,9 @@
 from genson import SchemaBuilder
+from neo4j import GraphDatabase
+from config import config
+from dotenv import load_dotenv
+
+load_dotenv()
 
 builder = SchemaBuilder()
 builder.add_schema({
@@ -21,3 +26,13 @@ cypher_query_tool = {
     }
 }
 
+def run_cypher_query(arguments):
+    print(arguments['query'])
+    driver = GraphDatabase.driver(config['neo4j']['uri'], auth=config['neo4j']['auth'])
+    with driver.session() as session:
+        response = session.run(arguments['query'])
+        output = response.data()
+        print(output)
+
+    driver.close()
+    return output

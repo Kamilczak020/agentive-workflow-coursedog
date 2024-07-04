@@ -4,7 +4,7 @@ from haystack.components.embedders import OpenAITextEmbedder
 from haystack.utils import Secret
 from config import config
 from dotenv import load_dotenv
-from ..utils import flatten
+from utils import flatten
 
 load_dotenv()
 
@@ -49,7 +49,7 @@ def run_semantic_search(arguments):
             RETURN node
         ''', question=question, index_name=arguments['over_index'])
         
-        output = flatten([remove_embed_keys(node_response['node']) for node_response in response.data()])
+        output = [remove_embed_keys(node_response['node']) for node_response in response.data()]
 
     driver.close()
     return output

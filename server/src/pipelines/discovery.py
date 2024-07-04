@@ -19,11 +19,18 @@ step_prompt_content = '''
 
     Given the following user query, think out loud and consider the next step of knowledge acquisition, required
     to answer the user query. Also take into account already gathered information, not to duplicate work.
+    Ensure that any new tool calls aren't identical or very similar to any of the past tool calls.
+
+    Remember, some information can be multiple jumps away. Use the provided schema to navigate it, potentially in multiple steps.
+    Information present is strictly related to the user query.
 
     User Query: {{ query }}
 
     Already gathered information:
     {{ info }}
+
+    Past tool calls:
+    {{ past_tool_calls }}
 '''
 
 step_prompt_template = [
@@ -58,7 +65,7 @@ discovery_generation_llm = OpenAIChatGenerator(
 )
 
 discovery_tools = [
-    # cypher_query_tool,
+    cypher_query_tool,
     search_semantically_tool,
 ]
 
@@ -71,11 +78,12 @@ chat_pipeline.connect('step_prompt_builder', 'step_generation_llm')
 chat_pipeline.connect('step_generation_llm', 'discovery_prompt_builder.query')
 chat_pipeline.connect('discovery_prompt_builder', 'discovery_generation_llm')
 
-def run_discovery_pipeline(query: str, info: str):
+def run_discovery_pipeline(query: str, info: str, past_tool_calls):
     return chat_pipeline.run({
         'step_prompt_builder': {
             'query': query,
             'info': info,
+            'past_tool_calls': past_tool_calls,
             'schema': get_data_model_prompt(),
         },
         'discovery_prompt_builder': {
