@@ -1,5 +1,3 @@
-import json
-from typing import List
 from haystack import Pipeline
 from haystack.dataclasses import ChatMessage
 from haystack.utils import Secret
@@ -42,7 +40,7 @@ discovery_prompt_content = '''
     <SCHEMA_END>
 
     Original user query {{ query }}
-    Given the following breakdown of the problem, execute
+    Given the following breakdown of the problem, use one of the provided tools to gain more insights.
 '''
 
 discovery_prompt_template = [
@@ -66,12 +64,16 @@ chat_pipeline.add_component('step_generation_llm', step_generation_llm)
 chat_pipeline.add_component('discovery_prompt_builder', discovery_prompt_builder)
 chat_pipeline.add_component('discovery_generation_llm', discovery_generation_llm)
 chat_pipeline.connect('step_prompt_builder', 'step_generation_llm')
+chat_pipeline.connect('step_generation_llm', 'discovery_prompt_builder.query')
 chat_pipeline.connect('discovery_prompt_builder', 'discovery_generation_llm')
 
 def run_generate_steps_pipeline(query: str):
     response = chat_pipeline.run({
-        'prompt_builder': {
+        'step_prompt_builder': {
             'query': query,
+            'schema': get_data_model_prompt(),
+        },
+        'discovery_prompt_builder': {
             'schema': get_data_model_prompt(),
         },
         'discovery_generation_llm': {
