@@ -5,3 +5,5 @@ venv
 documents/*.csv
 
 __pycache__/
+
+neo4j_db/

@@ -4,7 +4,6 @@ from haystack.components.embedders import OpenAITextEmbedder
 from haystack.utils import Secret
 from config import config
 from dotenv import load_dotenv
-from utils import flatten
 
 load_dotenv()
 
@@ -36,7 +35,7 @@ search_semantically_tool = {
 def remove_embed_keys(from_entry):
     return {k: v for k, v in from_entry.items() if not k.endswith('_embed')}
 
-def run_semantic_search(arguments):
+def run_semantic_search(arguments) -> list[dict]:
     driver = GraphDatabase.driver(config['neo4j']['uri'], auth=config['neo4j']['auth'])
     with driver.session() as session:
         embedder = OpenAITextEmbedder(api_key=Secret.from_env_var('OPENAI_API_KEY'), model='text-embedding-3-small')

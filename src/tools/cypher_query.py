@@ -26,13 +26,11 @@ cypher_query_tool = {
     }
 }
 
-def run_cypher_query(arguments):
-    print(arguments['query'])
+def run_cypher_query(arguments) -> list[dict]:
     driver = GraphDatabase.driver(config['neo4j']['uri'], auth=config['neo4j']['auth'])
     with driver.session() as session:
         response = session.run(arguments['query'])
         output = response.data()
-        print(output)
 
     driver.close()
     return output

@@ -1,10 +1,11 @@
 # University Analyics with Agentic Workflows
 
-This app is built on haystack, and uses 
+This app is built on haystack, and uses an agentic workflow to reason about, plan and go on side quests to gather information.
+Based on the collected info, it can then construct responses.
 
 ## Dataset
-This project was built on top of the following dataset (OULAD):
-https://analyse.kmi.open.ac.uk/open_dataset
+This project was developed with Coursedog data, which can only be accessed if you're part of the organization.
+None of the project data is, or will be, publicly accessible.
 
 If you wish to run this project locally, you will need to unzip it into `documents`.
 

@@ -1,7 +1,8 @@
 def get_data_model_prompt():
     return '''
-        The available knowledge is entirely contained in a neo4j graph database, following exactly this node schema:
-
+        The available knowledge is entirely contained in a neo4j graph database
+        Below you will find the entire data schema available to access.
+        
         ### Course
         - course_id - the id of the course
         - department_ids - the ids of the departments the course belongs to
@@ -23,6 +24,10 @@ def get_data_model_prompt():
         - email - professor\'s email
         - name - professor\'s name
         - type - professor\'s type
+
+        ### Department
+        - department_id - the id of the department
+        - department_name - the name of the department
 
         Besides the node schema, nodes are connected with the following relationships:
         - (c:Course)-[:BELONGS_TO]->(d:Department) (one-to-many)

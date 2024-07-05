@@ -37,7 +37,6 @@ def import_all_relationships(db, driver):
     with driver.session() as session:
         course_to_department(db, session)
         section_to_course(db, session)
-        section_to_department(db, session)
         section_to_professor(db, session)
 
 def import_all_embeddings(db, driver):
@@ -142,18 +141,6 @@ def section_to_course(db, session):
             WHERE s.course_id IS NOT NULL
             MATCH (c:Course {{ course_id: s.course_id }})
             MERGE (s)-[:FOR]->(c)
-        ''', section_id=entity['_id'])
-
-def section_to_department(db, session):
-    collection = db['sections.2024.8']
-
-    from_db = collection.find({ 'status': 'Active' })
-    for entity in from_db:
-        session.run(f'''
-            MATCH (s:Section {{ section_id: $section_id }})
-            WHERE s.department_id IS NOT NULL
-            MATCH (d:Department {{ department_id: s.department_id }})
-            MERGE (s)-[:BELONGS_TO]->(d)
         ''', section_id=entity['_id'])
 
 def section_to_professor(db, session):
